@@ -9,7 +9,7 @@ WALLET="--from secworkshop"
 WASMFILE="secret_lootbox.wasm"
 
 FILE_UPLOADHASH="uploadtx.txt"
-FILE_SALE_CONTRACT_ADDR="contractaddr.txt"
+FILE_LOTTERY_CONTRACT_ADDR="contractaddr.txt"
 FILE_CODE_ID="code.txt"
 
 ADDR_SECWORKSHOP="secret179v8tkkhuyj6qg39v328csfevh7rx7j5udrvge"
@@ -116,7 +116,7 @@ Instantiate() {
     #INSTANTIATETX=$(secretcli tx compute instantiate $CODE_ID '{"name":"secret_lottery", "ticket_count":100, "golden": 97 }' --label "Lottery$CODE_ID" --amount 1SCRT $WALLET -y | jq -r '.txhash')
     #echo $INSTANTIATETX
     #secretcli query tx $INSTANTIATETX
-    
+
     secretcli tx compute instantiate $CODE_ID '{"name":"secret_lottery", "ticket_count":100, "golden": 97 }' --label "Lottery$CODE_ID" --amount 1000000uscrt $WALLET -y
 }
 
@@ -132,12 +132,10 @@ GetContractAddress() {
     secretcli query compute list-contract-by-code $CODE_ID
     CONTRACT_ADDR=$(secretcli query compute list-contract-by-code $CODE_ID --output json | jq -r '.[0].address')
     
-    
-
     echo "Contract Address : "$CONTRACT_ADDR
 
-    #save to FILE_SALE_CONTRACT_ADDR
-    echo $CONTRACT_ADDR > $FILE_SALE_CONTRACT_ADDR
+    #save to FILE_LOTTERY_CONTRACT_ADDR
+    echo $CONTRACT_ADDR > $FILE_LOTTERY_CONTRACT_ADDR
 }
 
 
@@ -146,24 +144,30 @@ GetContractAddress() {
 ###################################################################################################
 ###################################################################################################
 #Send initial tokens
-SendInitialFund() {
-    CONTRACT_SALE=$(cat $FILE_SALE_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_VBLCK '{"send":{"amount":"1000000000","contract":"'$CONTRACT_SALE'","msg":""}}' $WALLET $TXFLAG
+BuyTicket() {
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_id": 1 }}' $WALLET --amount 10000uscrt
+    
+}
+
+EndLottery() {
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "end_lottery": {} }' $WALLET
 }
 
 SetPrice() {
-    CONTRACT_SALE=$(cat $FILE_SALE_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_SALE '{"set_price":{"denom":"ujuno", "price":"100"}}' $WALLET $TXFLAG
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_LOTTERY '{"set_price":{"denom":"ujuno", "price":"100"}}' $WALLET $TXFLAG
 }
 
 WithdrawAll() {
-    CONTRACT_SALE=$(cat $FILE_SALE_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_SALE '{"withdraw_all":{}}' $WALLET $TXFLAG
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_LOTTERY '{"withdraw_all":{}}' $WALLET $TXFLAG
 }
 
 PrintGetInfo() {
-    CONTRACT_SALE=$(cat $FILE_SALE_CONTRACT_ADDR)
-    junod query wasm contract-state smart $CONTRACT_SALE '{"get_info":{}}' $NODECHAIN
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    junod query wasm contract-state smart $CONTRACT_LOTTERY '{"get_info":{}}' $NODECHAIN
 }
 
 PrintPoolContractState() {
