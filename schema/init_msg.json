@@ -4,7 +4,7 @@
   "type": "object",
   "required": [
     "golden",
-    "items_count",
+    "ticket_count",
     "name"
   ],
   "properties": {
@@ -13,7 +13,7 @@
       "format": "uint32",
       "minimum": 0.0
     },
-    "items_count": {
+    "ticket_count": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0

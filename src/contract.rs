@@ -26,7 +26,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         items.push(Ticket {
             id: i,
             value: coin(1, USCRT_DENOM.clone()),
-            owner: env.contract.address.clone(),
+            owner: deps.api.canonical_address(&env.contract.address)?,
             approved: Vec::<CanonicalAddr>::new(),
         });
     }
@@ -42,7 +42,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     // Create state
     let state = State {
         items,
-        contract_owner: env.message.sender.clone(),
+        contract_owner: deps.api.canonical_address(&env.message.sender)?,
         winning_prize: winning_prize.clone(),
         deposit: env.message.sent_funds[0].amount,
     };
@@ -127,7 +127,7 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
     })?;
 
     // Transfer coin to buyer
-    perform_transfer(deps, &env.message.sender, token_id)?;
+    perform_transfer(deps, &deps.api.canonical_address(&env.message.sender)?, token_id)?;
 
     Ok(HandleResponse {
         messages: vec![],
@@ -144,7 +144,7 @@ fn end_lottery<S: Storage, A: Api, Q: Querier>(
 
     let mut state = config(&mut deps.storage).load()?;
     let mut messages: Vec<CosmosMsg> = vec![];
-    let contract_addr: HumanAddr = deps.api.human_address(&env.contract.address)?;
+    let contract_addr: HumanAddr = deps.api.human_address(&deps.api.canonical_address(&env.contract.address)?)?;
 
     for item in state.items.clone() {
         let to: HumanAddr = deps.api.human_address(&item.owner)?;
@@ -304,7 +304,7 @@ fn safe_transfer_from_with_data<S: Storage, A: Api, Q: Querier>(
     let item = state.items[token_id as usize].clone();
 
     // Check if owner or approved
-    if !is_owner_or_approved(&item, &env.message.sender) {
+    if !is_owner_or_approved(&item, &deps.api.canonical_address(&env.message.sender)?) {
         return Err(StdError::Unauthorized { backtrace: None });
     }
 
@@ -400,7 +400,7 @@ fn approve<S: Storage, A: Api, Q: Querier>(
     let mut item = state.items[token_id as usize].clone();
 
     // Check if owner or approved
-    if !is_owner_or_approved(&item, &env.message.sender) {
+    if !is_owner_or_approved(&item, &deps.api.canonical_address(&env.message.sender)?) {
         return Err(StdError::Unauthorized { backtrace: None });
     }
 
