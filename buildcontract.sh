@@ -156,19 +156,10 @@ EndLottery() {
     secretcli tx compute execute $CONTRACT_LOTTERY '{ "end_lottery": {} }' $WALLET
 }
 
-SetPrice() {
-    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_LOTTERY '{"set_price":{"denom":"ujuno", "price":"100"}}' $WALLET $TXFLAG
-}
 
-WithdrawAll() {
+PrintOwner() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_LOTTERY '{"withdraw_all":{}}' $WALLET $TXFLAG
-}
-
-PrintGetInfo() {
-    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    junod query wasm contract-state smart $CONTRACT_LOTTERY '{"get_info":{}}' $NODECHAIN
+    secretcli query compute contract-state smart $CONTRACT_LOTTERY '{"ticket_id":1}' $NODECHAIN
 }
 
 PrintPoolContractState() {
