@@ -33,7 +33,7 @@ CreateEnv() {
     rustup install nightly
     rustup target add wasm32-unknown-unknown --toolchain nightly
 
-    apt install build-essential
+    sudo apt install build-essential
 
     cargo install cargo-generate --features vendored-openssl
 }

@@ -41,6 +41,7 @@ schemars = "0.7"
 snafu = { version = "0.6.3" }
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 lazy_static = "1.4.0"
+#rand = { version = "0.7" }
 
 [dev-dependencies]
 cosmwasm-vm = { version = "0.10.1", default-features = false }

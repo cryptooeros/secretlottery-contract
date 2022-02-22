@@ -5,22 +5,21 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
     pub name: String,
-    pub ticket_count: u32,
-    pub golden: u32,
+    pub ticket_count: u64,
+    pub golden: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
-    SafeTransferFrom {
-        from: HumanAddr,
-        to: HumanAddr,
-        ticket_id: u32,
-    },
+    
     BuyTicket {
-        ticket_id: u32,
+        ticket_amount: u64,
     },
-    EndLottery {},
+    NewRound {},
+    SetConstant {
+        house_addr: HumanAddr
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -28,7 +27,7 @@ pub enum HandleMsg {
 pub enum QueryMsg {
     // GetCount returns the current count as a json-encoded number
     BalanceOf { owner: HumanAddr },
-    OwnerOf { ticket_id: u32 },
+    IsFinished { },
 }
 
 // We define a custom struct for each query response
