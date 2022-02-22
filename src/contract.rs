@@ -5,9 +5,9 @@ use cosmwasm_std::{
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 
-use crate::msg::{HandleMsg, InitMsg, QueryMsg};
+use crate::msg::{HandleMsg, InitMsg, QueryMsg, CountResponse};
 use crate::state::{config, config_read, State, Ticket, USCRT_DENOM};
-// use rand::Rng;
+use fastrand;
 
 const INTERVAL:u64 = 604800;
 const MAXTICKET:u64 = 99;
@@ -24,7 +24,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<InitResponse> {
     
     let tickets = Vec::<Ticket>::new();
-    let ticketscount: HashMap<String, u64> = HashMap::<String, u64>::new();
+    let ticket_count: HashMap<String, u64> = HashMap::<String, u64>::new();
 
     // 0 : 1970.1.1 00:00:00 Thu
     // must add 3 days and 16 hours then get first sunday 16:00 => 316800
@@ -36,10 +36,11 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     // Create state
     let state = State {
         tickets,
-        ticketscount,
+        ticket_count,
         contract_owner: deps.api.canonical_address(&env.message.sender)?,
         deposit: Uint128::zero(),
-        start_time
+        start_time,
+        win_ticket:0u64
     };
     
     config(&mut deps.storage).save(&state)?;
@@ -66,8 +67,9 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::BalanceOf { owner } => to_binary(&balance_of(deps, &owner)),
-        QueryMsg::IsFinished {} => to_binary(&is_finished(deps))
-        
+        QueryMsg::IsFinished {} => to_binary(&is_finished(deps)),
+        QueryMsg::Winner{} => to_binary(&get_winner(deps))
+                
     }
 }
 
@@ -127,7 +129,7 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
 
     let key:String = String::from(env.message.sender.as_str());
     let mut curamount:u64;
-    match state.ticketscount.get(&key) {
+    match state.ticket_count.get(&key) {
         Some(amount) => curamount = *amount,
         None => curamount = 0u64
     }
@@ -152,7 +154,7 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
         });
     }
 
-    state.ticketscount.entry(key).or_insert(curamount + ticket_amount);
+    state.ticket_count.entry(key).or_insert(curamount + ticket_amount);
     
     Ok(HandleResponse {
         messages: vec![],
@@ -186,10 +188,12 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
     let contract_addr: HumanAddr = deps.api.human_address(&deps.api.canonical_address(&env.contract.address)?)?;
 
     let ticketcount:u64 = state.tickets.len() as u64;
-    // let mut rng = rand::thread_rng();
-    // let rnd_ticket = rng.gen_range(0..ticketcount - 1);
 
-    let rnd_ticket = 1;
+    fastrand::seed(env.block.time);
+    let mut rng = fastrand::Rng::new();
+    let rnd_ticket = rng.u64((0..ticketcount - 1));
+
+    // let rnd_ticket = 1;
     let win_addr = state.tickets[rnd_ticket as usize].owner.clone();
     
     let winamount = ticketcount.checked_mul(8).unwrap().checked_div(10).unwrap();
@@ -219,9 +223,10 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
         }));
     }
     state.tickets = Vec::<Ticket>::new();
-    state.ticketscount = HashMap::<String, u64>::new();
+    state.ticket_count = HashMap::<String, u64>::new();
     state.deposit = Uint128::zero();
     state.start_time = (env.block.time - FIRSTSUNDAY) / INTERVAL * INTERVAL + FIRSTSUNDAY;
+    state.win_ticket = rnd_ticket;
 
     config(&mut deps.storage).save(&state)?;
 
@@ -246,7 +251,7 @@ fn balance_of<S: Storage, A: Api, Q: Querier>(
     
     let key:String = String::from(owner.as_str());
     let mut curamount:u64;
-    match state.ticketscount.get(&key) {
+    match state.ticket_count.get(&key) {
         Some(amount) => curamount = *amount,
         None => curamount = 0u64
     }
@@ -261,3 +266,13 @@ fn is_finished<S: Storage, A: Api, Q: Querier>(
     // Ok(start_time + INTERVAL > env.block.time)
     Ok(true)
 }
+
+fn get_winner<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+) -> StdResult<u64> {
+    let state = config_read(&deps.storage).load()?;
+    
+    Ok(state.win_ticket)
+}
+
+

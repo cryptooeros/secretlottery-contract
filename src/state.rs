@@ -19,10 +19,11 @@ pub struct Ticket {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub tickets: Vec<Ticket>,
-    pub ticketscount: HashMap<String, u64>,
+    pub ticket_count: HashMap<String, u64>,
     pub contract_owner: CanonicalAddr,
     pub deposit: Uint128,
-    pub start_time: u64
+    pub start_time: u64,
+    pub win_ticket: u64
 }
 
 pub fn config<S: Storage>(storage: &mut S) -> Singleton<S, State> {
