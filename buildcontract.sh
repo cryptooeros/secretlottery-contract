@@ -39,7 +39,7 @@ CreateEnv() {
 }
 
 InstallCli() {
-    sudo wget -O /usr/bin/secretcli https://github.com/scrtlabs/SecretNetwork/releases/download/v1.2.2/secretcli-Linux
+    sudo wget -O /usr/bin/secretcli https://github.com/scrtlabs/SecretNetwork/releases/download/v0.0.02/secretcli-Linux
     sudo chmod a+x /usr/bin/secretcli
     mkdir -p ~/.secretd/config
     
@@ -147,7 +147,7 @@ GetContractAddress() {
 #Send initial tokens
 BuyTicket() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_id": 1 }}' $WALLET --amount 10000uscrt
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_id": 1 }}' $WALLET --amount 10000uscrt -y
     
 }
 
@@ -156,22 +156,9 @@ EndLottery() {
     secretcli tx compute execute $CONTRACT_LOTTERY '{ "end_lottery": {} }' $WALLET
 }
 
-
-
-
 PrintOwner() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli query compute contract-state smart $CONTRACT_LOTTERY '{"ticket_id":1}' $NODECHAIN
-}
-
-PrintPoolContractState() {
-    junod query wasm list-code $NODECHAIN --output json
-    junod query wasm list-contract-by-code 16 $NODECHAIN
-    
-}
-
-PrintWalletBalance() {
-    junod query bank balances $ADDR_ADMIN $NODECHAIN
+    secretcli query compute query $CONTRACT_LOTTERY '{"owner_of":{"ticket_id":1}}'
 }
 
 #################################### End of Function ###################################################
@@ -184,12 +171,10 @@ sleep 7
     Instantiate
 sleep 7
     GetContractAddress
-# sleep 5
-   # SendInitialFund
-# sleep 3
-#     SetPrice
-# sleep 5
-#     PrintGetInfo
+sleep 5
+   BuyTicket
+sleep 3
+    PrintOwner
 else
     $PARAM
 fi
