@@ -161,6 +161,11 @@ PrintOwner() {
     secretcli query compute query $CONTRACT_LOTTERY '{"owner_of":{"ticket_id":1}}'
 }
 
+PrintBalance() {
+    secretcli query bank balances $ADDR_SECWORKSHOP
+    #secretcli query compute query $CONTRACT_CW20_TOKEN '{"balance":{"address":"'$ADDR_SECWORKSHOP'"}}' 
+}
+
 #################################### End of Function ###################################################
 if [[ $PARAM == "" ]]; then
     RustBuild
