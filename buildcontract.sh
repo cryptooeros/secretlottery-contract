@@ -113,7 +113,11 @@ Instantiate() {
     
     #read from FILE_CODE_ID
     CODE_ID=$(cat $FILE_CODE_ID)
-    secretcli tx compute instantiate $CODE_ID '{"name":"secret_lottery", "ticket_count":100, "golden": 97 }' --label "Lottery$CODE_ID" $WALLET -y
+    #INSTANTIATETX=$(secretcli tx compute instantiate $CODE_ID '{"name":"secret_lottery", "ticket_count":100, "golden": 97 }' --label "Lottery$CODE_ID" --amount 1SCRT $WALLET -y | jq -r '.txhash')
+    #echo $INSTANTIATETX
+    #secretcli query tx $INSTANTIATETX
+    
+    secretcli tx compute instantiate $CODE_ID '{"name":"secret_lottery", "ticket_count":100, "golden": 97 }' --label "Lottery$CODE_ID" --amount 1000000uscrt $WALLET -y
 }
 
 #Get Instantiated Contract Address
@@ -125,9 +129,11 @@ GetContractAddress() {
     CODE_ID=$(cat $FILE_CODE_ID)
     echo $CODE_ID
 
-secretcli query compute list-contract-by-code $CODE_ID
+    secretcli query compute list-contract-by-code $CODE_ID
     CONTRACT_ADDR=$(secretcli query compute list-contract-by-code $CODE_ID --output json | jq -r '.[0].address')
     
+    
+
     echo "Contract Address : "$CONTRACT_ADDR
 
     #save to FILE_SALE_CONTRACT_ADDR

@@ -20,7 +20,7 @@ secretcli tx compute store contract.wasm.gz --from account
 
 Instantiate contract:
 ```bash
-secretcli tx compute instantiate 1 '{ "name":"secret_lottery", "tickets_count":100, "winning": 97 }' --label secret-lottery --from account --amount 100000000uscrt # = 100SCRT
+secretcli tx compute instantiate 1 '{ "name":"secret_lottery", "ticket_count":100, "golden": 97 }' --label secret-lottery --from account --amount 100000000uscrt # = 100SCRT
 ```
 
 Buy a ticket:
