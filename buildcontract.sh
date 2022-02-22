@@ -157,6 +157,8 @@ EndLottery() {
 }
 
 
+
+
 PrintOwner() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
     secretcli query compute contract-state smart $CONTRACT_LOTTERY '{"ticket_id":1}' $NODECHAIN
