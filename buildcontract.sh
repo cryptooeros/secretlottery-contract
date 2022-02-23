@@ -151,18 +151,33 @@ GetContractAddress() {
 #Send initial tokens
 BuyTicket() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_id": 1 }}' $WALLET --amount 10000uscrt -y
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_amount": 5 }}' $WALLET --amount 5000000uscrt -y
     
 }
 
-EndLottery() {
+NewRound() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "end_lottery": {} }' $WALLET
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "new_round": {} }' $WALLET
 }
 
 PrintTicketCount() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli query compute query $CONTRACT_LOTTERY '{"balance_of":{"owner":"'$ADDR_SECWORKSHOP'"}}'
+    secretcli query compute query $CONTRACT_LOTTERY '{"tickets_of":{"owner":"'$ADDR_SECWORKSHOP'"}}'
+}
+
+PrintIsFinished() {
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    secretcli query compute query $CONTRACT_LOTTERY '{"is_finished":{}}'
+}
+
+PrintWinner() {
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    secretcli query compute query $CONTRACT_LOTTERY '{"winner":{}}'
+}
+
+PrintState() {
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    secretcli query compute query $CONTRACT_LOTTERY '{"total_state":{}}' --output json
 }
 
 PrintBalance() {
@@ -181,7 +196,7 @@ sleep 7
 sleep 7
     GetContractAddress
 sleep 5
-#    BuyTicket
+   BuyTicket
 sleep 3
     PrintTicketCount
 else

@@ -5,7 +5,7 @@ use cosmwasm_std::{
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 
-use crate::msg::{HandleMsg, InitMsg, QueryMsg, CountResponse};
+use crate::msg::{HandleMsg, InitMsg, QueryMsg, CountResponse, StateResponse};
 use crate::state::{config, config_read, State, Ticket, USCRT_DENOM};
 // use fastrand;
 
@@ -64,9 +64,11 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<Binary> {
     match msg {
-        QueryMsg::BalanceOf { owner } => to_binary(&balance_of(deps, &owner)),
+        QueryMsg::TicketsOf { owner } => to_binary(&tickets_of(deps, &owner)),
+        QueryMsg::TotalBalance { } => to_binary(&total_balance(deps)),
         QueryMsg::IsFinished {} => to_binary(&is_finished(deps)),
-        QueryMsg::Winner{} => to_binary(&get_winner(deps))
+        QueryMsg::Winner{} => to_binary(&get_winner(deps)),
+        QueryMsg::TotalState{} => to_binary(&total_state(deps))
                 
     }
 }
@@ -108,11 +110,10 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
         return Err(throw_gen_err(format!("You can't get tickets for free!")));
     }
 
-    
     let sent_funds: Coin = env.message.sent_funds[0].clone();
 
     let tamount:u128 = Uint128::from(ticket_amount).u128();
-    if sent_funds.amount.u128() < tamount {
+    if sent_funds.amount.u128() < tamount * 1000000 {
         return Err(throw_gen_err(format!(
             "You sent {:?} funds, it is not enough!",
             sent_funds.amount
@@ -142,10 +143,11 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
         )));
     }
     
-    config(&mut deps.storage).update(|mut state| {
-        state.deposit.0 += tamount;
-        Ok(state)
-    })?;
+    // config(&mut deps.storage).update(|mut state| {
+    //     state.deposit.0 += tamount;
+    //     Ok(state)
+    // })?;
+    state.deposit.0 += sent_funds.amount.u128();
 
     let cnt:u64 = state.tickets.len() as u64;
     for i in 0..ticket_amount {
@@ -154,7 +156,7 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
             owner: deps.api.canonical_address(&env.message.sender)?,
         });
     }
-
+    config(&mut deps.storage).save(&state)?;
     Ok(HandleResponse {
         messages: vec![],
         log: vec![],
@@ -196,8 +198,8 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
     let rnd_ticket = ((env.block.time % 100) *  (ticketcount + env.block.time % 53) * (ticketcount + env.block.time % 37)) % ticketcount;
     let win_addr = state.tickets[rnd_ticket as usize].owner.clone();
     
-    let winamount = ticketcount.checked_mul(8).unwrap().checked_div(10).unwrap();
-    let houseamount = ticketcount - winamount;
+    let winamount = state.deposit.u128().checked_mul(8).unwrap().checked_div(10).unwrap();
+    let houseamount = state.deposit.u128() - winamount;
 
     let mut messages: Vec<CosmosMsg> = vec![];
     
@@ -236,7 +238,7 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
     })
 }
 
-fn balance_of<S: Storage, A: Api, Q: Querier>(
+fn tickets_of<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     owner: &HumanAddr,
 ) -> StdResult<u64> {
@@ -247,9 +249,8 @@ fn balance_of<S: Storage, A: Api, Q: Querier>(
     }
 
     let state = config_read(&deps.storage).load()?;
-    
-    let key:String = String::from(owner.as_str());
-    let mut curamount:u64 = 0;
+
+    let mut curamount:u64 = 0u64;
     
     for ticket in state.tickets.clone() {
         if owner == &deps.api.human_address(&ticket.owner)? {
@@ -274,6 +275,27 @@ fn get_winner<S: Storage, A: Api, Q: Querier>(
     let state = config_read(&deps.storage).load()?;
     
     Ok(state.win_ticket)
+}
+
+fn total_balance<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+) -> StdResult<u128> {
+    let state = config_read(&deps.storage).load()?;
+    
+    Ok(state.deposit.u128())
+}
+
+fn total_state<S: Storage, A: Api, Q: Querier>
+    (deps: &Extern<S, A, Q>
+) -> StdResult<StateResponse> {
+    let state = config_read(&deps.storage).load()?;
+    Ok(StateResponse {
+        tickets: state.tickets,
+        contract_owner: deps.api.human_address(&state.contract_owner)?,
+        deposit: state.deposit,
+        start_time: state.start_time,
+        win_ticket: state.win_ticket
+    })
 }
 
 

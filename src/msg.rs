@@ -26,13 +26,26 @@ pub enum HandleMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     // GetCount returns the current count as a json-encoded number
-    BalanceOf { owner: HumanAddr },
+    TicketsOf { owner: HumanAddr },
+    TotalBalance { },
     IsFinished { },
-    Winner { }
+    Winner { },
+    TotalState { }
 }
 
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CountResponse {
     pub count: i32,
+}
+
+
+// We define a custom struct for each query response
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct StateResponse {
+    pub tickets: Vec<Ticket>,
+    pub contract_owner: HumanAddr,
+    pub deposit: Uint128,
+    pub start_time: u64,
+    pub win_ticket: u64
 }
