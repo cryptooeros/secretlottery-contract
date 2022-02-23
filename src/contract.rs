@@ -2,10 +2,12 @@ use cosmwasm_std::{
     coin, to_binary, Api, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Env, Extern,
     HandleResponse, HumanAddr, InitResponse, Querier, StdError, StdResult, Storage, Uint128
 };
-use std::collections::HashMap;
+
+use std::hash::{Hash, Hasher};
+use std::collections::hash_map::DefaultHasher;
 use lazy_static::lazy_static;
 
-use crate::msg::{HandleMsg, InitMsg, QueryMsg, CountResponse, StateResponse};
+use crate::msg::{HandleMsg, InitMsg, QueryMsg, CountResponse, StateResponse, HashObj};
 use crate::state::{config, config_read, State, Ticket, USCRT_DENOM};
 // use fastrand;
 
@@ -180,6 +182,11 @@ fn set_constant<S: Storage, A: Api, Q: Querier>(
         data: None,
     })
 }
+fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
+}
 
 fn new_round<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -188,14 +195,30 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
     let mut state = config(&mut deps.storage).load()?;
     let contract_addr: HumanAddr = deps.api.human_address(&deps.api.canonical_address(&env.contract.address)?)?;
 
-    let ticketcount:u64 = state.tickets.len() as u64;
+    let ticket_count:u64 = state.tickets.len() as u64;
+    if ticket_count == 0 {
+        return Err(throw_gen_err(format!(
+            "No tickets are sold!"
+        )));
+    }
 
     // fastrand::seed(env.block.time);
     // let mut rng = fastrand::Rng::new();
     // let rnd_ticket = rng.u64((0..ticketcount - 1));
 
-
-    let rnd_ticket = ((env.block.time % 100) *  (ticketcount + env.block.time % 53) * (ticketcount + env.block.time % 37)) % ticketcount;
+    let mut str = String::from("");
+    
+    for ticket in state.tickets.clone() {
+        str.push_str(deps.api.human_address(&ticket.owner)?.as_str());
+    }
+    let obj = HashObj {
+        time: env.block.time,
+        ticket_count,
+        tickets: str
+    };
+    
+    let rnd_ticket = calculate_hash(&obj) % ticket_count ;
+    // let rnd_ticket = ((env.block.time % 100) * (ticketcount + env.block.time % 53) * (ticketcount + env.block.time % 37)) % ticketcount;
     let win_addr = state.tickets[rnd_ticket as usize].owner.clone();
     
     let winamount = state.deposit.u128().checked_mul(8).unwrap().checked_div(10).unwrap();

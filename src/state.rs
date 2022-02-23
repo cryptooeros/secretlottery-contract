@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{CanonicalAddr, Coin, Storage, Uint128};
 use cosmwasm_storage::{singleton, singleton_read, ReadonlySingleton, Singleton};
-use std::collections::HashMap;
 
 pub static CONFIG_KEY: &[u8] = b"config";
 pub static USCRT_DENOM: &str = "uscrt";

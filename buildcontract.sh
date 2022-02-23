@@ -150,14 +150,15 @@ GetContractAddress() {
 ###################################################################################################
 #Send initial tokens
 BuyTicket() {
+    echo "=====BuyTicket======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_amount": 5 }}' $WALLET --amount 5000000uscrt -y
-    
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_amount": 70 }}' $WALLET --amount 70000000uscrt -y
 }
 
 NewRound() {
+    echo "=====NewRound======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "new_round": {} }' $WALLET
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "new_round": {} }' $WALLET -y
 }
 
 PrintTicketCount() {
@@ -176,29 +177,35 @@ PrintWinner() {
 }
 
 PrintState() {
+    echo "=====PrintState======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli query compute query $CONTRACT_LOTTERY '{"total_state":{}}' --output json
+    secretcli query compute query $CONTRACT_LOTTERY '{"total_state":{}}'
 }
 
 PrintBalance() {
+    echo "=====PrintBalance======"
     secretcli query bank balances $ADDR_SECWORKSHOP
     #secretcli query compute query $CONTRACT_CW20_TOKEN '{"balance":{"address":"'$ADDR_SECWORKSHOP'"}}' 
 }
 
 #################################### End of Function ###################################################
 if [[ $PARAM == "" ]]; then
-    RustBuild
-    Upload
-sleep 7
-    GetCode
-sleep 7
-    Instantiate
-sleep 7
-    GetContractAddress
-sleep 5
+#     RustBuild
+#     Upload
+# sleep 7
+#     GetCode
+# sleep 7
+#     Instantiate
+# sleep 7
+#     GetContractAddress
+# sleep 5
    BuyTicket
-sleep 3
-    PrintTicketCount
+sleep 7
+    NewRound
+sleep 7
+    PrintState
+sleep 1
+    PrintBalance
 else
     $PARAM
 fi

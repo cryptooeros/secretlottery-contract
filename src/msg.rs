@@ -2,7 +2,7 @@ use cosmwasm_std::HumanAddr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use cosmwasm_std::{CanonicalAddr, Coin, Storage, Uint128};
-use std::collections::HashMap;
+
 use crate::state::{config, config_read, State, Ticket, USCRT_DENOM};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -37,6 +37,16 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CountResponse {
     pub count: i32,
+}
+
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
+#[derive(Hash)]
+pub struct HashObj {
+    pub time: u64,
+    pub ticket_count: u64,
+    pub tickets: String
 }
 
 
