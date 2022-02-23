@@ -30,12 +30,14 @@ CreateEnv() {
     rustup target list --installed
     rustup target add wasm32-unknown-unknown
 
-    # rustup install nightly
-    # rustup target add wasm32-unknown-unknown --toolchain nightly
+#    rustup install nightly
+#    rustup target add wasm32-unknown-unknown --toolchain nightly
 
     sudo apt install build-essential
 
     cargo install cargo-generate --features vendored-openssl
+
+    export PATH="~/.cargo/bin:$PATH"
 }
 
 InstallCli() {
@@ -48,6 +50,8 @@ InstallCli() {
     node = "tcp://testnet.securesecrets.org:26657"
     output = "text"
     broadcast-node = "sync"' > ~/.secretd/config/config.toml
+
+    secretcli keys import secworkshop secworkshop.key
 
 }
 
