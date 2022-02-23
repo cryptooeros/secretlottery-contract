@@ -161,6 +161,12 @@ NewRound() {
     secretcli tx compute execute $CONTRACT_LOTTERY '{ "new_round": {} }' $WALLET -y
 }
 
+
+SetConstant() {
+    echo "=====SetConstant======"
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "set_constant": {"house_addr": "secret179v8tkkhuyj6qg39v328csfevh7rx7j5udrvge"} }' $WALLET -y
+}
 PrintTicketCount() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
     secretcli query compute query $CONTRACT_LOTTERY '{"tickets_of":{"owner":"'$ADDR_SECWORKSHOP'"}}'
@@ -190,15 +196,15 @@ PrintBalance() {
 
 #################################### End of Function ###################################################
 if [[ $PARAM == "" ]]; then
-#     RustBuild
-#     Upload
-# sleep 7
-#     GetCode
-# sleep 7
-#     Instantiate
-# sleep 7
-#     GetContractAddress
-# sleep 5
+    RustBuild
+    Upload
+sleep 7
+    GetCode
+sleep 7
+    Instantiate
+sleep 7
+    GetContractAddress
+sleep 5
    BuyTicket
 sleep 7
     NewRound
