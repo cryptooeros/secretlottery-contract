@@ -30,8 +30,8 @@ CreateEnv() {
     rustup target list --installed
     rustup target add wasm32-unknown-unknown
 
-    rustup install nightly
-    rustup target add wasm32-unknown-unknown --toolchain nightly
+    # rustup install nightly
+    # rustup target add wasm32-unknown-unknown --toolchain nightly
 
     sudo apt install build-essential
 
