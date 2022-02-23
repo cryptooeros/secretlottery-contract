@@ -122,7 +122,7 @@ Instantiate() {
     #echo $INSTANTIATETX
     #secretcli query tx $INSTANTIATETX
 
-    secretcli tx compute instantiate $CODE_ID '{"name":"secret_lottery", "ticket_count":100, "golden": 97 }' --label "Lottery$CODE_ID" --amount 1000000uscrt $WALLET -y
+    secretcli tx compute instantiate $CODE_ID '{}' --label "Lotterys$CODE_ID" $WALLET -y
 }
 
 #Get Instantiated Contract Address
@@ -160,9 +160,9 @@ EndLottery() {
     secretcli tx compute execute $CONTRACT_LOTTERY '{ "end_lottery": {} }' $WALLET
 }
 
-PrintOwner() {
+PrintTicketCount() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli query compute query $CONTRACT_LOTTERY '{"owner_of":{"ticket_id":1}}'
+    secretcli query compute query $CONTRACT_LOTTERY '{"balance_of":{"owner":"'$ADDR_SECWORKSHOP'"}}'
 }
 
 PrintBalance() {
@@ -181,9 +181,9 @@ sleep 7
 sleep 7
     GetContractAddress
 sleep 5
-   BuyTicket
+#    BuyTicket
 sleep 3
-    PrintOwner
+    PrintTicketCount
 else
     $PARAM
 fi

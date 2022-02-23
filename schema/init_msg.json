@@ -3,23 +3,9 @@
   "title": "InitMsg",
   "type": "object",
   "required": [
-    "golden",
-    "ticket_count",
-    "name"
+    
   ],
   "properties": {
-    "golden": {
-      "type": "integer",
-      "format": "uint32",
-      "minimum": 0.0
-    },
-    "ticket_count": {
-      "type": "integer",
-      "format": "uint32",
-      "minimum": 0.0
-    },
-    "name": {
-      "type": "string"
-    }
+    
   }
 }

@@ -7,7 +7,7 @@ use lazy_static::lazy_static;
 
 use crate::msg::{HandleMsg, InitMsg, QueryMsg, CountResponse};
 use crate::state::{config, config_read, State, Ticket, USCRT_DENOM};
-use fastrand;
+// use fastrand;
 
 const INTERVAL:u64 = 604800;
 const MAXTICKET:u64 = 99;
@@ -24,7 +24,6 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<InitResponse> {
     
     let tickets = Vec::<Ticket>::new();
-    let ticket_count: HashMap<String, u64> = HashMap::<String, u64>::new();
 
     // 0 : 1970.1.1 00:00:00 Thu
     // must add 3 days and 16 hours then get first sunday 16:00 => 316800
@@ -36,7 +35,6 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     // Create state
     let state = State {
         tickets,
-        ticket_count,
         contract_owner: deps.api.canonical_address(&env.message.sender)?,
         deposit: Uint128::zero(),
         start_time,
@@ -128,11 +126,14 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
     //End check
 
     let key:String = String::from(env.message.sender.as_str());
-    let mut curamount:u64;
-    match state.ticket_count.get(&key) {
-        Some(amount) => curamount = *amount,
-        None => curamount = 0u64
+    let mut curamount:u64 = 0;
+    
+    for ticket in state.tickets.clone() {
+        if env.message.sender == deps.api.human_address(&ticket.owner)? {
+            curamount = curamount + 1;
+        }
     }
+
 
     if curamount + ticket_amount > MAXTICKET {
         return Err(throw_gen_err(format!(
@@ -154,8 +155,6 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
         });
     }
 
-    state.ticket_count.entry(key).or_insert(curamount + ticket_amount);
-    
     Ok(HandleResponse {
         messages: vec![],
         log: vec![],
@@ -189,11 +188,12 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
 
     let ticketcount:u64 = state.tickets.len() as u64;
 
-    fastrand::seed(env.block.time);
-    let mut rng = fastrand::Rng::new();
-    let rnd_ticket = rng.u64((0..ticketcount - 1));
+    // fastrand::seed(env.block.time);
+    // let mut rng = fastrand::Rng::new();
+    // let rnd_ticket = rng.u64((0..ticketcount - 1));
 
-    // let rnd_ticket = 1;
+
+    let rnd_ticket = ((env.block.time % 100) *  (ticketcount + env.block.time % 53) * (ticketcount + env.block.time % 37)) % ticketcount;
     let win_addr = state.tickets[rnd_ticket as usize].owner.clone();
     
     let winamount = ticketcount.checked_mul(8).unwrap().checked_div(10).unwrap();
@@ -223,7 +223,6 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
         }));
     }
     state.tickets = Vec::<Ticket>::new();
-    state.ticket_count = HashMap::<String, u64>::new();
     state.deposit = Uint128::zero();
     state.start_time = (env.block.time - FIRSTSUNDAY) / INTERVAL * INTERVAL + FIRSTSUNDAY;
     state.win_ticket = rnd_ticket;
@@ -250,10 +249,12 @@ fn balance_of<S: Storage, A: Api, Q: Querier>(
     let state = config_read(&deps.storage).load()?;
     
     let key:String = String::from(owner.as_str());
-    let mut curamount:u64;
-    match state.ticket_count.get(&key) {
-        Some(amount) => curamount = *amount,
-        None => curamount = 0u64
+    let mut curamount:u64 = 0;
+    
+    for ticket in state.tickets.clone() {
+        if owner == &deps.api.human_address(&ticket.owner)? {
+            curamount = curamount + 1;
+        }
     }
     
     Ok(curamount)
