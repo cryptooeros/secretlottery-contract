@@ -7,6 +7,8 @@ version of Rust already (eg. 1.41+).
 
 ## Prerequisites
 
+
+
 Before starting, make sure you have [rustup](https://rustup.rs/) along with a
 recent `rustc` and `cargo` version installed. Currently, we are testing on 1.41+.
 
