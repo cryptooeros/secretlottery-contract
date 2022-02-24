@@ -10,6 +10,7 @@ WASMFILE="secret_lootbox.wasm"
 
 FILE_UPLOADHASH="uploadtx.txt"
 FILE_LOTTERY_CONTRACT_ADDR="contractaddr.txt"
+FILE_CONTRACT_CODEHASH="codehash.txt"
 FILE_CODE_ID="code.txt"
 
 ADDR_SECWORKSHOP="secret179v8tkkhuyj6qg39v328csfevh7rx7j5udrvge"
@@ -141,6 +142,9 @@ GetContractAddress() {
 
     #save to FILE_LOTTERY_CONTRACT_ADDR
     echo $CONTRACT_ADDR > $FILE_LOTTERY_CONTRACT_ADDR
+
+    CODE_HASH=$(secretcli query compute contract-hash $CONTRACT_ADDR)
+    echo $CODE_HASH > $FILE_CONTRACT_CODEHASH
 }
 
 
@@ -152,7 +156,7 @@ GetContractAddress() {
 BuyTicket() {
     echo "=====BuyTicket======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_amount": 70 }}' $WALLET --amount 70000000uscrt -y
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_amount": 7 }}' $WALLET --amount 7000000uscrt -y
 }
 
 NewRound() {
