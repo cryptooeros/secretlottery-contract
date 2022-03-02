@@ -157,7 +157,7 @@ GetContractAddress() {
 BuyTicket() {
     echo "=====BuyTicket======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_amount": 8 }}' $WALLET --amount 8000000uscrt 
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_amount": 8 }}' $WALLET --amount 8000000uscrt -y
 }
 
 NewRound() {
@@ -172,7 +172,7 @@ SetConstant() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
     secretcli tx compute execute $CONTRACT_LOTTERY '{ "set_constant": {"house_addr": "'$ADDR_KEVIN'"} }' $WALLET -y
 }
-PrintTicketCount() {
+PrintTicketArray() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
     secretcli query compute query $CONTRACT_LOTTERY '{"tickets_of":{"owner":"'$ADDR_SECWORKSHOP'"}}'
 }

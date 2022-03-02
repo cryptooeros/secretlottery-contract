@@ -271,7 +271,7 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
 fn tickets_of<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     owner: &HumanAddr,
-) -> StdResult<u64> {
+) -> StdResult<String> {
     let owner_addr_raw = deps.api.canonical_address(&owner)?;
 
     if owner_addr_raw == *ZERO_ADDRESS {
@@ -280,13 +280,24 @@ fn tickets_of<S: Storage, A: Api, Q: Querier>(
 
     let state = config_read(&deps.storage).load()?;
 
-    let mut curamount:u64 = 0u64;
+    let mut curamount:String = String::from("");
     
     for ticket in state.tickets.clone() {
         if owner == &deps.api.human_address(&ticket.owner)? {
-            curamount = curamount + 1;
+            if curamount != "" {
+                curamount = curamount + ",";
+            }
+            curamount = curamount + &ticket.id.to_string();
         }
     }
+
+    // Ok(StateResponse {
+    //     tickets: state.tickets,
+    //     contract_owner: deps.api.human_address(&state.contract_owner)?,
+    //     deposit: state.deposit,
+    //     start_time: state.start_time,
+    //     win_ticket: state.win_ticket
+    // })
     
     Ok(curamount)
 }
