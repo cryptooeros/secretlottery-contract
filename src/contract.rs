@@ -126,6 +126,7 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
     if (env.block.time - state.start_time) > INTERVAL {
         new_round(deps, env.clone());
     }
+    state = config(&mut deps.storage).load()?;
     //End check
 
     let key:String = String::from(env.message.sender.as_str());
@@ -172,6 +173,12 @@ fn set_constant<S: Storage, A: Api, Q: Querier>(
     house_addr:&HumanAddr
 ) -> StdResult<HandleResponse> {
     let mut state = config(&mut deps.storage).load()?;
+    
+    if state.contract_owner != deps.api.canonical_address(&env.message.sender)? {
+        return Err(throw_gen_err(format!(
+            "Unauthorized!"            
+        )));
+    }
     state.contract_owner = deps.api.canonical_address(house_addr)?;
     config(&mut deps.storage).save(&state)?;
 

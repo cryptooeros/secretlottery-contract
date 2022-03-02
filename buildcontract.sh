@@ -15,7 +15,8 @@ FILE_CODE_ID="code.txt"
 
 ADDR_SECWORKSHOP="secret179v8tkkhuyj6qg39v328csfevh7rx7j5udrvge"
 ADDR_ACHILLES="secret154d0vg8m7khzmqh8nxf0nduen088v8st80q03t"
-CONTRACT_VBLCK="juno1j5rl5sy40nmlqyugphgh5hnyrmj2cc5h7swy9x8rm0jkxy566nlqcx0jmv"
+
+ADDR_KEVIN="secret1vxqt3js87ykxf2qstr0spvuqnw9vwu3lew8j6v"
 
 
 ###################################################################################################
@@ -156,7 +157,7 @@ GetContractAddress() {
 BuyTicket() {
     echo "=====BuyTicket======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_amount": 7 }}' $WALLET --amount 7000000uscrt -y
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "buy_ticket": { "ticket_amount": 8 }}' $WALLET --amount 8000000uscrt 
 }
 
 NewRound() {
@@ -169,7 +170,7 @@ NewRound() {
 SetConstant() {
     echo "=====SetConstant======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "set_constant": {"house_addr": "secret179v8tkkhuyj6qg39v328csfevh7rx7j5udrvge"} }' $WALLET -y
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "set_constant": {"house_addr": "'$ADDR_KEVIN'"} }' $WALLET -y
 }
 PrintTicketCount() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
