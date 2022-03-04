@@ -40,7 +40,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         contract_owner: deps.api.canonical_address(&env.message.sender)?,
         deposit: Uint128::zero(),
         start_time,
-        win_ticket:0u64
+        win_ticket:0u64,
+        win_amount: Uint128::zero()
     };
     
     config(&mut deps.storage).save(&state)?;
@@ -258,6 +259,7 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
     state.deposit = Uint128::zero();
     state.start_time = (env.block.time - FIRSTSUNDAY) / INTERVAL * INTERVAL + FIRSTSUNDAY;
     state.win_ticket = rnd_ticket;
+    state.win_amount = Uint128::from(winamount);
 
     config(&mut deps.storage).save(&state)?;
 
@@ -335,7 +337,8 @@ fn total_state<S: Storage, A: Api, Q: Querier>
         contract_owner: deps.api.human_address(&state.contract_owner)?,
         deposit: state.deposit,
         start_time: state.start_time,
-        win_ticket: state.win_ticket
+        win_ticket: state.win_ticket,
+        win_amount: state.win_amount,
     })
 }
 
