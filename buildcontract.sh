@@ -18,7 +18,6 @@ ADDR_ACHILLES="secret154d0vg8m7khzmqh8nxf0nduen088v8st80q03t"
 
 ADDR_KEVIN="secret1vxqt3js87ykxf2qstr0spvuqnw9vwu3lew8j6v"
 
-
 ###################################################################################################
 ###################################################################################################
 ###################################################################################################
@@ -55,6 +54,23 @@ InstallCli() {
 
     secretcli keys import secworkshop secworkshop.key
 
+}
+
+SetTestnet() {
+    sudo echo 'chain-id = "pulsar-2"
+    keyring-backend = "test"
+    node = "tcp://testnet.securesecrets.org:26657"
+    output = "text"
+    broadcast-node = "sync"' > ~/.secretd/config/config.toml
+
+}
+
+SetMainnet() {
+    sudo echo 'chain-id = "secret-4"
+    keyring-backend = "test"
+    node = "tcp://api.scrt.network:26657"
+    output = "text"
+    broadcast-node = "sync"' > ~/.secretd/config/config.toml
 }
 
 #Build Optimized Contracts
@@ -166,7 +182,6 @@ NewRound() {
     secretcli tx compute execute $CONTRACT_LOTTERY '{ "new_round": {} }' $WALLET -y
 }
 
-
 SetConstant() {
     echo "=====SetConstant======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
@@ -211,8 +226,8 @@ sleep 7
     GetContractAddress
 sleep 5
    BuyTicket
-sleep 7
-    NewRound
+# sleep 7
+#     NewRound
 sleep 7
     PrintState
 sleep 1
