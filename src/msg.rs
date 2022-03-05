@@ -58,5 +58,6 @@ pub struct StateResponse {
     pub deposit: Uint128,
     pub start_time: u64,
     pub win_ticket: u64,
-    pub win_amount: Uint128
+    pub win_amount: Uint128,
+    pub winner: HumanAddr
 }

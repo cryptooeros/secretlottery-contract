@@ -22,7 +22,8 @@ pub struct State {
     pub deposit: Uint128,
     pub start_time: u64,
     pub win_ticket: u64,
-    pub win_amount: Uint128
+    pub win_amount: Uint128,
+    pub winner: CanonicalAddr
 }
 
 pub fn config<S: Storage>(storage: &mut S) -> Singleton<S, State> {

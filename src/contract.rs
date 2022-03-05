@@ -41,7 +41,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         deposit: Uint128::zero(),
         start_time,
         win_ticket:0u64,
-        win_amount: Uint128::zero()
+        win_amount: Uint128::zero(),
+        winner: deps.api.canonical_address(&env.message.sender)?
     };
     
     config(&mut deps.storage).save(&state)?;
@@ -260,6 +261,7 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
     state.start_time = (env.block.time - FIRSTSUNDAY) / INTERVAL * INTERVAL + FIRSTSUNDAY;
     state.win_ticket = rnd_ticket;
     state.win_amount = Uint128::from(winamount);
+    state.winner = win_addr;
 
     config(&mut deps.storage).save(&state)?;
 
@@ -339,6 +341,7 @@ fn total_state<S: Storage, A: Api, Q: Querier>
         start_time: state.start_time,
         win_ticket: state.win_ticket,
         win_amount: state.win_amount,
+        winner: deps.api.human_address(&state.winner)?
     })
 }
 
