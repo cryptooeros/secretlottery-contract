@@ -224,8 +224,8 @@ sleep 7
     Instantiate
 sleep 7
     GetContractAddress
-sleep 5
-   BuyTicket
+# sleep 5
+#    BuyTicket
 # sleep 7
 #     NewRound
 sleep 7
