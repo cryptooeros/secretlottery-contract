@@ -141,7 +141,7 @@ Instantiate() {
     #echo $INSTANTIATETX
     #secretcli query tx $INSTANTIATETX
 
-    secretcli tx compute instantiate $CODE_ID '{"interval":300}' --label "SecretLottery$CODE_ID" $WALLET -y
+    secretcli tx compute instantiate $CODE_ID '{"interval":604800}' --label "SecretLotteryReal$CODE_ID" $WALLET -y
 }
 
 #Get Instantiated Contract Address
