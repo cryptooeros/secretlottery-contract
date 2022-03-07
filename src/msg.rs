@@ -7,6 +7,7 @@ use crate::state::{config, config_read, State, Ticket, USCRT_DENOM};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
+    pub interval:u64
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

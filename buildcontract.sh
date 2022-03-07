@@ -141,7 +141,7 @@ Instantiate() {
     #echo $INSTANTIATETX
     #secretcli query tx $INSTANTIATETX
 
-    secretcli tx compute instantiate $CODE_ID '{}' --label "LotteryAGAIN$CODE_ID" $WALLET -y
+    secretcli tx compute instantiate $CODE_ID '{"interval":300}' --label "SecretLottery$CODE_ID" $WALLET -y
 }
 
 #Get Instantiated Contract Address
@@ -180,7 +180,7 @@ BuyTicket() {
 NewRound() {
     echo "=====NewRound======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
-    secretcli tx compute execute $CONTRACT_LOTTERY '{ "new_round": {} }' --from sec2
+    secretcli tx compute execute $CONTRACT_LOTTERY '{ "new_round": {} }' $WALLET
 }
 
 SetConstant() {

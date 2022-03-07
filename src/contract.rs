@@ -11,7 +11,8 @@ use crate::msg::{HandleMsg, InitMsg, QueryMsg, CountResponse, StateResponse, Has
 use crate::state::{config, config_read, State, Ticket, USCRT_DENOM};
 // use fastrand;
 
-const INTERVAL:u64 = 604800;
+// const INTERVAL:u64 = 604800;
+const INTERVAL:u64 = 300;
 const MAXTICKET:u64 = 99;
 const FIRSTSUNDAY:u64 = 316800;
 
@@ -32,7 +33,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     // we must set the start_time to the nearest sunday 1600
     // (env.block.time - 316800) % INTERVAL * INTERVAL + 316800
 
-    let start_time = (env.block.time - FIRSTSUNDAY) / INTERVAL * INTERVAL + FIRSTSUNDAY;
+    let start_time = (env.block.time - FIRSTSUNDAY) / msg.interval * msg.interval + FIRSTSUNDAY;
 
     // Create state
     let state = State {
@@ -42,7 +43,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         start_time,
         win_ticket:0u64,
         win_amount: Uint128::zero(),
-        winner: deps.api.canonical_address(&env.message.sender)?
+        winner: deps.api.canonical_address(&env.message.sender)?,
+        interval: msg.interval
     };
     
     config(&mut deps.storage).save(&state)?;
@@ -123,10 +125,69 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
             sent_funds.amount
         )));
     }
+    let mut messages: Vec<CosmosMsg> = vec![];
     
     //check deadline is passed and then call new_round
-    if (env.block.time - state.start_time) > INTERVAL {
-        new_round(deps, env.clone());
+    if (env.block.time - state.start_time) > state.interval && state.tickets.len() > 0{
+        //new_round(deps, env.clone());
+        let contract_addr: HumanAddr = deps.api.human_address(&deps.api.canonical_address(&env.contract.address)?)?;
+
+        let ticket_count:u64 = state.tickets.len() as u64;
+        // if ticket_count == 0 {
+        //     return Err(throw_gen_err(format!(
+        //         "No tickets are sold!"
+        //     )));
+        // }
+
+        let mut str = String::from("");
+        
+        for ticket in state.tickets.clone() {
+            str.push_str(deps.api.human_address(&ticket.owner)?.as_str());
+        }
+        let obj = HashObj {
+            time: env.block.time,
+            ticket_count,
+            tickets: str
+        };
+        
+        let rnd_ticket = calculate_hash(&obj) % ticket_count ;
+        // let rnd_ticket = ((env.block.time % 100) * (ticketcount + env.block.time % 53) * (ticketcount + env.block.time % 37)) % ticketcount;
+        let win_addr = state.tickets[rnd_ticket as usize].owner.clone();
+        
+        let winamount = state.deposit.u128().checked_mul(8).unwrap().checked_div(10).unwrap();
+        let houseamount = state.deposit.u128() - winamount;
+
+        
+        
+        if state.deposit.u128() > 0 {
+            //Send to winner
+            messages.push(CosmosMsg::Bank(BankMsg::Send {
+                from_address: contract_addr.clone(),
+                to_address: deps.api.human_address(&win_addr)?,
+                amount: vec![Coin {
+                    denom: USCRT_DENOM.to_string(),
+                    amount: Uint128::from(winamount),
+                }],
+            }));
+        
+            //Send to house
+            messages.push(CosmosMsg::Bank(BankMsg::Send {
+                from_address: contract_addr.clone(),
+                to_address: deps.api.human_address(&state.contract_owner)?,
+                amount: vec![Coin {
+                    denom: USCRT_DENOM.to_string(),
+                    amount: Uint128::from(houseamount),
+                }],
+            }));
+        }
+        state.tickets = Vec::<Ticket>::new();
+        state.deposit = Uint128::zero();
+        state.start_time = (env.block.time - FIRSTSUNDAY) / state.interval * state.interval + FIRSTSUNDAY;
+        state.win_ticket = rnd_ticket;
+        state.win_amount = Uint128::from(winamount);
+        state.winner = win_addr;
+
+        config(&mut deps.storage).save(&state)?;
     }
     state = config(&mut deps.storage).load()?;
     //End check
@@ -163,7 +224,7 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
     }
     config(&mut deps.storage).save(&state)?;
     Ok(HandleResponse {
-        messages: vec![],
+        messages: messages,
         log: vec![],
         data: None,
     })
@@ -202,18 +263,20 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
     env: Env
 ) -> StdResult<HandleResponse> {
     let mut state = config(&mut deps.storage).load()?;
+    if state.contract_owner != deps.api.canonical_address(&env.message.sender)? {
+        return Err(throw_gen_err(format!(
+            "Unauthorized!"            
+        )));
+    }
     let contract_addr: HumanAddr = deps.api.human_address(&deps.api.canonical_address(&env.contract.address)?)?;
-
+    
+    
     let ticket_count:u64 = state.tickets.len() as u64;
     if ticket_count == 0 {
         return Err(throw_gen_err(format!(
             "No tickets are sold!"
         )));
     }
-
-    // fastrand::seed(env.block.time);
-    // let mut rng = fastrand::Rng::new();
-    // let rnd_ticket = rng.u64((0..ticketcount - 1));
 
     let mut str = String::from("");
     
@@ -258,7 +321,7 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
     }
     state.tickets = Vec::<Ticket>::new();
     state.deposit = Uint128::zero();
-    state.start_time = (env.block.time - FIRSTSUNDAY) / INTERVAL * INTERVAL + FIRSTSUNDAY;
+    state.start_time = (env.block.time - FIRSTSUNDAY) / state.interval * state.interval + FIRSTSUNDAY;
     state.win_ticket = rnd_ticket;
     state.win_amount = Uint128::from(winamount);
     state.winner = win_addr;
@@ -294,14 +357,6 @@ fn tickets_of<S: Storage, A: Api, Q: Querier>(
             curamount = curamount + &ticket.id.to_string();
         }
     }
-
-    // Ok(StateResponse {
-    //     tickets: state.tickets,
-    //     contract_owner: deps.api.human_address(&state.contract_owner)?,
-    //     deposit: state.deposit,
-    //     start_time: state.start_time,
-    //     win_ticket: state.win_ticket
-    // })
     
     Ok(curamount)
 }
@@ -309,8 +364,7 @@ fn tickets_of<S: Storage, A: Api, Q: Querier>(
 fn is_finished<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
 ) -> StdResult<bool> {
-    // let start_time = (env.block.time - FIRSTSUNDAY) / INTERVAL * INTERVAL + FIRSTSUNDAY;
-    // Ok(start_time + INTERVAL > env.block.time)
+   
     Ok(true)
 }
 
