@@ -188,6 +188,7 @@ SetConstant() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
     secretcli tx compute execute $CONTRACT_LOTTERY '{ "set_constant": {"house_addr": "'$ADDR_KEVIN'"} }' $WALLET -y
 }
+
 PrintTicketArray() {
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
     secretcli query compute query $CONTRACT_LOTTERY '{"tickets_of":{"owner":"'$ADDR_SECWORKSHOP'"}}'
@@ -207,6 +208,12 @@ PrintState() {
     echo "=====PrintState======"
     CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
     secretcli query compute query $CONTRACT_LOTTERY '{"total_state":{}}'
+}
+
+PrintHistories() {
+    echo "=====PrintState======"
+    CONTRACT_LOTTERY=$(cat $FILE_LOTTERY_CONTRACT_ADDR)
+    secretcli query compute query $CONTRACT_LOTTERY '{"histories":{}}'
 }
 
 PrintBalance() {

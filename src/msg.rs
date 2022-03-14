@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use cosmwasm_std::{CanonicalAddr, Coin, Storage, Uint128};
 
-use crate::state::{config, config_read, State, Ticket, USCRT_DENOM};
+use crate::state::{config, config_read, State, Ticket, History, USCRT_DENOM};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -31,7 +31,8 @@ pub enum QueryMsg {
     TotalBalance { },
     IsFinished { },
     Winner { },
-    TotalState { }
+    TotalState { },
+    Histories {}
 }
 
 // We define a custom struct for each query response
@@ -61,4 +62,9 @@ pub struct StateResponse {
     pub win_ticket: u64,
     pub win_amount: Uint128,
     pub winner: HumanAddr
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct HistoryResponse {
+    pub histories: Vec<History>
 }

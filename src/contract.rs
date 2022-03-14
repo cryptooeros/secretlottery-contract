@@ -7,8 +7,8 @@ use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 use lazy_static::lazy_static;
 
-use crate::msg::{HandleMsg, InitMsg, QueryMsg, CountResponse, StateResponse, HashObj};
-use crate::state::{config, config_read, State, Ticket, USCRT_DENOM};
+use crate::msg::{HandleMsg, InitMsg, QueryMsg, CountResponse, StateResponse, HistoryResponse, HashObj};
+use crate::state::{config, config_read, State, Ticket, History, USCRT_DENOM};
 // use fastrand;
 
 // const INTERVAL:u64 = 604800;
@@ -27,6 +27,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<InitResponse> {
     
     let tickets = Vec::<Ticket>::new();
+    let mut histories = Vec::<History>::new();
 
     // 0 : 1970.1.1 00:00:00 Thu
     // must add 3 days and 16 hours then get first sunday 16:00 => 316800
@@ -35,16 +36,23 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 
     let start_time = (env.block.time - FIRSTSUNDAY) / msg.interval * msg.interval + FIRSTSUNDAY;
 
+    histories.push(History {
+        end_time: start_time - msg.interval,
+        ticket: 0,
+        address: env.message.sender.clone(),
+        amount: Uint128::zero()
+     });
     // Create state
     let state = State {
         tickets,
-        contract_owner: deps.api.canonical_address(&env.message.sender)?,
+        contract_owner: deps.api.canonical_address(&env.message.sender.clone())?,
         deposit: Uint128::zero(),
         start_time,
         win_ticket:0u64,
         win_amount: Uint128::zero(),
         winner: deps.api.canonical_address(&env.message.sender)?,
-        interval: msg.interval
+        interval: msg.interval,
+        histories
     };
     
     config(&mut deps.storage).save(&state)?;
@@ -74,7 +82,8 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
         QueryMsg::TotalBalance { } => to_binary(&total_balance(deps)),
         QueryMsg::IsFinished {} => to_binary(&is_finished(deps)),
         QueryMsg::Winner{} => to_binary(&get_winner(deps)),
-        QueryMsg::TotalState{} => to_binary(&total_state(deps))
+        QueryMsg::TotalState{} => to_binary(&total_state(deps)),
+        QueryMsg::Histories{} => to_binary(&histories(deps))
                 
     }
 }
@@ -180,12 +189,18 @@ fn buy_ticket<S: Storage, A: Api, Q: Querier>(
                 }],
             }));
         }
+        state.histories.push(History {
+            end_time: state.start_time,
+            ticket: rnd_ticket,
+            address: deps.api.human_address(&win_addr.clone())?,
+            amount: Uint128::from(winamount)
+         });
         state.tickets = Vec::<Ticket>::new();
         state.deposit = Uint128::zero();
         state.start_time = (env.block.time - FIRSTSUNDAY) / state.interval * state.interval + FIRSTSUNDAY;
         state.win_ticket = rnd_ticket;
         state.win_amount = Uint128::from(winamount);
-        state.winner = win_addr;
+        state.winner = win_addr.clone();
 
         config(&mut deps.storage).save(&state)?;
     }
@@ -319,12 +334,22 @@ fn new_round<S: Storage, A: Api, Q: Querier>(
             }],
         }));
     }
+
+    state.histories.push(History {
+       end_time: state.start_time,
+       ticket: rnd_ticket,
+       address: deps.api.human_address(&win_addr.clone())?,
+       amount: Uint128::from(winamount)
+    });
+
     state.tickets = Vec::<Ticket>::new();
     state.deposit = Uint128::zero();
     state.start_time = (env.block.time - FIRSTSUNDAY) / state.interval * state.interval + FIRSTSUNDAY;
     state.win_ticket = rnd_ticket;
     state.win_amount = Uint128::from(winamount);
-    state.winner = win_addr;
+    state.winner = win_addr.clone();
+
+    
 
     config(&mut deps.storage).save(&state)?;
 
@@ -396,6 +421,15 @@ fn total_state<S: Storage, A: Api, Q: Querier>
         win_ticket: state.win_ticket,
         win_amount: state.win_amount,
         winner: deps.api.human_address(&state.winner)?
+    })
+}
+
+fn histories<S: Storage, A: Api, Q: Querier>
+    (deps: &Extern<S, A, Q>
+) -> StdResult<HistoryResponse> {
+    let state = config_read(&deps.storage).load()?;
+    Ok(HistoryResponse {
+        histories: state.histories
     })
 }
 

@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, Coin, Storage, Uint128};
+use cosmwasm_std::{CanonicalAddr, HumanAddr, Coin, Storage, Uint128};
 use cosmwasm_storage::{singleton, singleton_read, ReadonlySingleton, Singleton};
 
 pub static CONFIG_KEY: &[u8] = b"config";
@@ -14,6 +14,14 @@ pub struct Ticket {
     pub owner: CanonicalAddr
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct History {
+    pub end_time: u64,
+    pub ticket: u64,
+    pub address: HumanAddr,
+    pub amount: Uint128
+}
+
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
@@ -24,7 +32,8 @@ pub struct State {
     pub win_ticket: u64,
     pub win_amount: Uint128,
     pub winner: CanonicalAddr,
-    pub interval: u64
+    pub interval: u64,
+    pub histories: Vec<History>
 }
 
 pub fn config<S: Storage>(storage: &mut S) -> Singleton<S, State> {
